@@ -1,7 +1,7 @@
 sysstat-applet
 ==============
 
-Sysstat applet for X11, written in python and PyQt4
+Sysstat system tray applet for X11, written in python and PyQt4
 
 Functionality
 =============
