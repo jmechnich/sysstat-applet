@@ -51,12 +51,24 @@ def parseCommandLine():
     args = parser.parse_args()
     if args.daemon: detach()
 
+def setThemeFromGtk():
+    f = QFile(QDir.homePath() + "/.gtkrc-2.0");
+    if not f.open(QIODevice.ReadOnly | QIODevice.Text):
+        return
+    while not f.atEnd():
+        l = f.readLine().trimmed();
+        if l.startsWith("gtk-icon-theme-name="):
+            s = QString(l.split('=')[-1]);
+            QIcon.setThemeName(s.remove('"'));
+            break
+
 def main():
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     parseCommandLine()
     a = QApplication(sys.argv)
     QApplication.setOrganizationName( "mechnich")
     QApplication.setApplicationName( "sysstat-applet")
+    setThemeFromGtk();
     i = [cpu.IndicatorCpu(), mem.IndicatorMem(), disk.IndicatorDisk()]
     return a.exec_()
 

@@ -62,7 +62,7 @@ class IndicatorCpu(Indicator):
         
     def initContextMenu(self):
         m = QMenu()
-        m.addAction( "&Quit", qApp.quit)
+        m.addAction( QIcon.fromTheme("application-exit"), "&Quit", qApp.quit)
         self.s.setContextMenu(m)
     
     def initStats(self):
