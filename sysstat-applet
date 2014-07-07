@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import mem, cpu, disk
+from sysstatapplet import mem, cpu, disk
 import time, sys, signal, os, argparse
 from PyQt4.Qt import *
 
