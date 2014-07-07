@@ -1,3 +1,4 @@
 #!/bin/sh
 
-rm -f *~ *.pyc
+find . -name "*~" -delete
+find . -name "*.pyc" -delete
