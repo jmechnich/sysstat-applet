@@ -1,13 +1,14 @@
-from indicator import *
-from splash import *
+from appletlib.indicator import Indicator
+from appletlib.splash import Splash
 
 from PyQt4.Qt import *
 
 import os
 
 class SplashCpu(Splash):
-    def __init__(self,indicator):
-        Splash.__init__(self, indicator)
+    def __init__(self,settings):
+        Splash.__init__(self)
+        self.settings = settings
         self.initVars()
         
     def initVars(self):
@@ -28,15 +29,15 @@ class SplashCpu(Splash):
         lh = self.br2.height()
         p = QPainter(self)
         p.setFont( self.font)
-        p.fillRect( self.rect(), self.sti.bgColor)
-        p.setPen(self.sti.fgColor)
+        p.fillRect( self.rect(), self.settings.bgColor)
+        p.setPen(self.settings.fgColor)
         p.translate(self.margin,self.margin)
         for k in sorted(self.data, key=lambda i: sum(i[2:]), reverse=True)[:5]:
             xpos=0
             p.setPen(Qt.white)
             p.drawText(xpos, 0, self.br1.width(), lh, Qt.AlignRight, str(k[0]))
             xpos+=self.br1.width()+self.margin
-            p.setPen(self.sti.fgColor)
+            p.setPen(self.settings.fgColor)
             p.drawText(xpos, 0, 100, lh, Qt.AlignRight, k[1][1:-1])
             xpos+=100+self.margin
             p.setPen(Qt.green)
@@ -77,7 +78,7 @@ class IndicatorCpu(Indicator):
             if self.splash.isVisible():
                 self.splash.hide()
             else:
-                self.updateSplash(True)
+                self.updateSplashGeometry(hide=True)
                 self.splash.show()
         elif reason == QSystemTrayIcon.MiddleClick:
             self.reset()

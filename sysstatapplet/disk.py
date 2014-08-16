@@ -1,5 +1,6 @@
-from indicator import *
-from splash    import *
+from appletlib.indicator import Indicator
+from appletlib.splash    import Splash
+
 from util      import *
 
 from PyQt4.Qt  import *
@@ -7,8 +8,12 @@ from PyQt4.Qt  import *
 import time, os
 
 class SplashDisk(Splash):
-    def __init__(self,indicator):
-        Splash.__init__(self, indicator)
+    def __init__(self, settings):
+        Splash.__init__(self)
+        self.settings = settings
+        self.initVars()
+        
+    def initVars(self):
         self.data = {}
         fm = QFontMetrics( self.font)
         self.br1 = fm.boundingRect("write")
@@ -25,8 +30,8 @@ class SplashDisk(Splash):
         self.resize( self.width, height)
         p = QPainter(self)
         p.setFont( self.font)
-        p.fillRect( self.rect(), self.sti.bgColor)
-        p.setPen(self.sti.fgColor)
+        p.fillRect( self.rect(), self.settings.bgColor)
+        p.setPen(self.settings.fgColor)
         p.translate(self.margin,self.margin)
 
         total1=0; total2=0
@@ -35,14 +40,14 @@ class SplashDisk(Splash):
             p.setPen(Qt.white)
             p.drawText(xpos, 0, self.br1.width(), lh, Qt.AlignLeft,  k)
             xpos+=self.br1.width()+self.margin
-            p.setPen(self.sti.fgColor)
+            p.setPen(self.settings.fgColor)
             p.drawText(xpos, 0, self.br1.width(), lh, Qt.AlignRight, "read")
             xpos+=self.br1.width()+self.margin
             p.setPen(Qt.green)
             p.drawText(xpos, 0, self.br2.width(), lh, Qt.AlignRight,
                        prettyPrintBytesSec(self.data[k][0]))
             xpos+=self.br2.width()+self.margin
-            p.setPen(self.sti.fgColor)
+            p.setPen(self.settings.fgColor)
             p.drawText(xpos, 0, self.br1.width(), lh, Qt.AlignRight, "write")
             xpos+=self.br1.width()+self.margin
             p.setPen(Qt.red)
@@ -56,14 +61,14 @@ class SplashDisk(Splash):
             p.setPen(Qt.white)
             p.drawText(xpos, 0, self.br1.width(), lh, Qt.AlignLeft,  "all")
             xpos+=self.br1.width()+self.margin
-            p.setPen(self.sti.fgColor)
+            p.setPen(self.settings.fgColor)
             p.drawText(xpos, 0, self.br1.width(), lh, Qt.AlignRight, "read")
             xpos+=self.br1.width()+self.margin
             p.setPen(Qt.green)
             p.drawText(xpos, 0, self.br2.width(), lh, Qt.AlignRight,
                        prettyPrintBytesSec(total1))
             xpos+=self.br2.width()+self.margin
-            p.setPen(self.sti.fgColor)
+            p.setPen(self.settings.fgColor)
             p.drawText(xpos, 0, self.br1.width(), lh, Qt.AlignRight, "write")
             xpos+=self.br1.width()+self.margin
             p.setPen(Qt.red)
@@ -100,7 +105,7 @@ class IndicatorDisk(Indicator):
             if self.splash.isVisible():
                 self.splash.hide()
             else:
-                self.updateSplash(True)
+                self.updateSplashGeometry(hide=True)
                 self.splash.show()
         elif reason == QSystemTrayIcon.MiddleClick:
             self.reset()

@@ -13,6 +13,7 @@ Functionality
 Requirements
 ============
 
+- appletlib (https://github.com/jmechnich/appletlib)
 - Python 2.7
 - PyQt 4.x
 
