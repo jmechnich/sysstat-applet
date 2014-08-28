@@ -5,7 +5,7 @@ from util      import *
 
 from PyQt4.Qt  import *
 
-import time, os
+import time, os, re
 
 class SplashDisk(Splash):
     def __init__(self, settings):
@@ -121,7 +121,7 @@ class IndicatorDisk(Indicator):
         new = {}
         for dirname, dirnames, filenames in os.walk('/sys/block'):
             for subdirname in dirnames:
-                if subdirname.startswith("loop"): continue
+                if re.match( r'^loop\d+$|^ram\d+$', subdirname): continue
                 stat = os.path.join(dirname, subdirname)
                 stat = os.path.join(stat, "stat")
                 if not os.path.isfile(stat): continue
