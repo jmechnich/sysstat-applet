@@ -131,14 +131,14 @@ class IndicatorCpu(Indicator):
         w = pix.width()-2*margin
         h = pix.height()-2*margin
 
-        n = len(self.old.keys())
-        if not n: n=1
+        n = len(self.old.keys()) if len(self.old)>2 else 1
+        keys = sorted(self.old.keys()) if len(self.old)>2 else ['cpu']
         box = QRect(0, 0,(w-(n-1)*margin)/n, h)
         p.save()
         p.rotate(-90)
         p.translate(-h-margin,margin)
         total = 0
-        for k in sorted(self.old.keys()):
+        for k in keys:
             user = sum([int(i) for i in self.new[k][0:1]]) - \
                 sum([int(i) for i in self.old[k][0:1]])
             system = int(self.new[k][2])-int(self.old[k][2])
@@ -168,7 +168,7 @@ class IndicatorCpu(Indicator):
             f = QFont("Dejavu Sans", 6)
             p.setFont( f)
             p.drawText(margin,margin,w,h/2,Qt.AlignCenter,
-                       "%d%%" % round(perc1*100))
+                       "%d%%" % round((perc1+perc2)*100))
             
         p.end()
         self.s.setIcon(QIcon(pix))
