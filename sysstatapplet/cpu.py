@@ -130,9 +130,10 @@ class IndicatorCpu(Indicator):
         margin = 1
         w = pix.width()-2*margin
         h = pix.height()-2*margin
-
-        n = len(self.old.keys()) if len(self.old)>2 else 1
-        keys = sorted(self.old.keys()) if len(self.old)>2 else ['cpu']
+        
+        keys = sorted(list(set(self.old.keys()).intersection(self.new.keys())))
+        if len(keys) < 3: keys = ['cpu']
+        n = len(keys)
         box = QRect(0, 0,(w-(n-1)*margin)/n, h)
         p.save()
         p.rotate(-90)
@@ -155,21 +156,20 @@ class IndicatorCpu(Indicator):
                        round(box.height()*perc1), box.width(), c2)
             p.translate(0,box.width()+margin)
         p.restore()
-        if len(self.old):
-            work = sum([int(i) for i in self.new["cpu"][0:2]]) - \
-                sum([int(i) for i in self.old["cpu"][0:2]])
-            total = self.new["cpu"][4]-self.old["cpu"][4]
-            if total == 0: total = 1
-            perc1  = float(work)/total
-            c1 = QColor(round(self.s.bgColor.red()+self.s.fgColor.red())/2,
-                        round(self.s.bgColor.green()+self.s.fgColor.green())/2,
-                        round(self.s.bgColor.blue()+self.s.fgColor.blue())/2)
-            p.setPen(self.s.fgColor)
-            f = QFont("Dejavu Sans", 6)
-            p.setFont( f)
-            p.drawText(margin,margin,w,h/2,Qt.AlignCenter,
-                       "%d%%" % round((perc1+perc2)*100))
-            
+
+        work = sum([int(i) for i in self.new["cpu"][0:2]]) - \
+               sum([int(i) for i in self.old["cpu"][0:2]])
+        total = self.new["cpu"][4]-self.old["cpu"][4]
+        if total == 0: total = 1
+        perc1  = float(work)/total
+        c1 = QColor(round(self.s.bgColor.red()+self.s.fgColor.red())/2,
+                    round(self.s.bgColor.green()+self.s.fgColor.green())/2,
+                    round(self.s.bgColor.blue()+self.s.fgColor.blue())/2)
+        p.setPen(self.s.fgColor)
+        f = QFont("Dejavu Sans", 6)
+        p.setFont( f)
+        p.drawText(margin,margin,w,h/2,Qt.AlignCenter,
+                   "%d%%" % round((perc1+perc2)*100))
         p.end()
         self.s.setIcon(QIcon(pix))
         

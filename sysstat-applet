@@ -13,8 +13,8 @@ def parseCommandLine():
         description='Sysstat applet collection')
     parser.add_argument( '-d', '--daemon',
                          help='run as daemon', action="store_true")
-    parser.add_argument( '-v', '--verbosity', type=int,
-                         help='select verbosity')
+    parser.add_argument( '-v', '--verbosity', type=int, default=0,
+                         help='select verbosity (default: 0)')
     args = parser.parse_args()
     
     # detach immediately if run as daemon
