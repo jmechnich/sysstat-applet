@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import argparse, syslog
+import argparse, daemon, syslog
 
 from appletlib.app      import Application
 from sysstatapplet.cpu  import IndicatorCpu
@@ -16,17 +16,9 @@ def parseCommandLine():
     parser.add_argument( '-v', '--verbosity', type=int, default=0,
                          help='select verbosity (default: 0)')
     args = parser.parse_args()
-    
-    # detach immediately if run as daemon
-    if args.daemon: Application.detach()
-    
-    ret['verbosity'] = args.verbosity
-    ret['daemon']    = args.daemon
-    
-    return ret
+    return args
 
-def main():
-    argdict = parseCommandLine()
+def main(argdict):
     app = Application("mechnich","sysstat-applet")
     app.init(argdict)
     i = [IndicatorCpu(), IndicatorMem(), IndicatorDisk()]
@@ -34,4 +26,10 @@ def main():
     return app.exec_()
 
 if __name__ == "__main__":
-    main()
+    args = parseCommandLine()
+    argdict = { 'verbosity': args.verbosity, 'daemon': args.daemon }
+    if args.daemon:
+        with daemon.DaemonContext():
+            main(argdict)
+    else:
+        main(argdict)
