@@ -1,9 +1,10 @@
-from appletlib.indicator import Indicator
 from appletlib.splash import Splash
 
 from PyQt4.Qt import *
 
 import os
+
+from sysstat import SysStat
 
 class SplashCpu(Splash):
     def __init__(self,settings):
@@ -46,13 +47,9 @@ class SplashCpu(Splash):
             p.translate(0,lh+self.margin)
         p.end()
 
-class IndicatorCpu(Indicator):
+class IndicatorCpu(SysStat):
     def __init__(self):
-        Indicator.__init__(self, "cpu")
-        self.func = self.drawStats
-        self.initVars()
-        self.initContextMenu()
-        self.initStats()
+        SysStat.__init__(self, "cpu")
         self.splash = SplashCpu(self.s)
 
     def initVars(self):
@@ -61,34 +58,6 @@ class IndicatorCpu(Indicator):
         self.oldps = {}
         self.newps = {}
         
-    def initContextMenu(self):
-        m = QMenu()
-        m.addAction( QIcon.fromTheme("application-exit"), "&Quit", qApp.quit)
-        self.s.setContextMenu(m)
-    
-    def initStats(self):
-        self.s.triggerUpdate.connect( self.func)
-        QTimer.singleShot(10, self.func)
-        self.s.activated.connect( self.systrayClicked)
-
-    def systrayClicked(self,reason):
-        if reason == QSystemTrayIcon.Trigger or \
-                reason == QSystemTrayIcon.DoubleClick:
-            if not self.splash: return
-            if self.splash.isVisible():
-                self.splash.hide()
-            else:
-                self.updateSplashGeometry(hide=True)
-                self.splash.show()
-        elif reason == QSystemTrayIcon.MiddleClick:
-            self.reset()
-            self.initContextMenu()
-            self.initStats()
-        elif reason == QSystemTrayIcon.Context:
-            pass
-        elif reason == QSystemTrayIcon.Unknown:
-            print "unknown"
-
     def parseProc(self):
         f = open('/proc/stat')
         new = {}

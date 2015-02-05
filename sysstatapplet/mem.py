@@ -1,4 +1,3 @@
-from appletlib.indicator import Indicator
 from appletlib.splash import Splash
 
 from util import *
@@ -6,6 +5,8 @@ from util import *
 from PyQt4.Qt import *
 
 import os, resource
+
+from sysstat import SysStat
 
 class SplashMem(Splash):
     def __init__(self, settings):
@@ -48,46 +49,15 @@ class SplashMem(Splash):
             p.translate(0,lh+self.margin)
         p.end()
 
-class IndicatorMem(Indicator):
+class IndicatorMem(SysStat):
     def __init__(self):
-        Indicator.__init__(self, "mem")
-        self.func = self.drawStats
-        self.initVars()
-        self.initContextMenu()
-        self.initStats()
+        SysStat.__init__(self, "mem")
         self.splash = SplashMem(self.s)
         
     def initVars(self):
         self.mem = {}
         self.ps  = {}
         
-    def initContextMenu(self):
-        m = QMenu()
-        m.addAction( QIcon.fromTheme("application-exit"), "&Quit", qApp.quit)
-        self.s.setContextMenu(m)
-
-    def initStats(self):
-        self.s.triggerUpdate.connect( self.func)
-        QTimer.singleShot(10,  self.func)
-        self.s.activated.connect( self.systrayClicked)
-
-    def systrayClicked(self,reason):
-        if reason == QSystemTrayIcon.Trigger or \
-                reason == QSystemTrayIcon.DoubleClick:
-            if self.splash.isVisible():
-                self.splash.hide()
-            else:
-                self.updateSplashGeometry(hide=True)
-                self.splash.show()
-        elif reason == QSystemTrayIcon.MiddleClick:
-            self.reset()
-            self.initContextMenu()
-            self.initStats()
-        elif reason == QSystemTrayIcon.Context:
-            pass
-        elif reason == QSystemTrayIcon.Unknown:
-            print "unknown"
-
     def parseProc(self):
         f = open('/proc/meminfo')
         counter = 0

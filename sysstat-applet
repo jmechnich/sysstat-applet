@@ -7,17 +7,6 @@ from sysstatapplet.cpu  import IndicatorCpu
 from sysstatapplet.mem  import IndicatorMem
 from sysstatapplet.disk import IndicatorDisk
 
-def parseCommandLine():
-    ret = {}
-    parser = argparse.ArgumentParser(
-        description='Sysstat applet collection')
-    parser.add_argument( '-d', '--daemon',
-                         help='run as daemon', action="store_true")
-    parser.add_argument( '-v', '--verbosity', type=int, default=0,
-                         help='select verbosity (default: 0)')
-    args = parser.parse_args()
-    return args
-
 def main(argdict):
     app = Application("mechnich","sysstat-applet")
     app.init(argdict)
@@ -26,7 +15,7 @@ def main(argdict):
     return app.exec_()
 
 if __name__ == "__main__":
-    args = parseCommandLine()
+    args = Application.parseCommandLine('Sysstat applet collection')
     argdict = { 'verbosity': args.verbosity, 'daemon': args.daemon }
     if args.daemon:
         with daemon.DaemonContext():
