@@ -4,7 +4,7 @@ from PyQt4.Qt import QMenu, QTimer, qApp, QSystemTrayIcon, QIcon
 
 class SysStat(Indicator):
     def __init__(self,name):
-        Indicator.__init__(self, name)
+        Indicator.__init__(self, name, interval=2000)
         self.func = self.drawStats
         self.initVars()
         self.initContextMenu()

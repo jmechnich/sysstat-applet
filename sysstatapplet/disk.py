@@ -95,10 +95,9 @@ class IndicatorDisk(SysStat):
                 stat = os.path.join(dirname, subdirname)
                 stat = os.path.join(stat, "stat")
                 if not os.path.isfile(stat): continue
-                f = open(stat)
-                l = f.readline().split()
-                new[subdirname] = (int(l[2]), int(l[6]), time.time())
-                f.close()
+                with open(stat) as f:
+                    l = f.readline().split()
+                    new[subdirname] = (int(l[2]), int(l[6]), time.time())
         if len(self.old):
             self.old = dict(self.new)
         else:

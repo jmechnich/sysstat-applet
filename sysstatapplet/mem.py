@@ -59,26 +59,25 @@ class IndicatorMem(SysStat):
         self.ps  = {}
         
     def parseProc(self):
-        f = open('/proc/meminfo')
-        counter = 0
-        for line in f:
-            if counter == 5: break
-            l = line.split()
-            self.mem[l[0][:-1]] = l[1]
-            counter += 1
-        f.close()
+        with open('/proc/meminfo') as f:
+            counter = 0
+            for line in f:
+                if counter == 5: break
+                l = line.split()
+                self.mem[l[0][:-1]] = l[1]
+                counter += 1
 
         dirname = '/proc'
         pids = [pid for pid in os.listdir(dirname) if pid.isdigit()]
         self.ps = {}
         for pid in pids:
-            stat = os.path.join(dirname, pid, "stat")
-            if not os.path.isfile(stat): continue
-            f = open(stat)
-            l = f.readline().split()
-            # read pid, comm, rss
-            f.close()
-            self.ps[int(l[0])] = [ l[1], int(l[23])*(resource.getpagesize()/1024)]
+            try:
+                with open(os.path.join(dirname, pid, "stat")) as pf:
+                    l = pf.readline().split()
+                    # read pid, comm, rss
+                    self.ps[int(l[0])] = [ l[1], int(l[23])*(resource.getpagesize()/1024) ]
+            except:
+                pass
 
     def drawStats(self):
         self.parseProc()

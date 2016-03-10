@@ -59,31 +59,31 @@ class IndicatorCpu(SysStat):
         self.newps = {}
         
     def parseProc(self):
-        f = open('/proc/stat')
-        new = {}
-        for line in f:
-            if not line.startswith('cpu'): break
-            l = line.split()
-            new[l[0]] = (l[1], l[2], l[3], l[4],
-                              sum([int(i) for i in l[1:]]))
-        if len(self.old):
-            self.old = dict(self.new)
-        else:
-            self.old = new
-        self.new = new
-        f.close()
+        with open('/proc/stat') as f:
+            new = {}
+            for line in f:
+                if not line.startswith('cpu'): break
+                l = line.split()
+                new[l[0]] = (l[1], l[2], l[3], l[4],
+                             sum([int(i) for i in l[1:]]))
+            if len(self.old):
+                self.old = dict(self.new)
+            else:
+                self.old = new
+            self.new = new
         
         dirname = '/proc'
         pids = [pid for pid in os.listdir(dirname) if pid.isdigit()]
         newps = {}
         for pid in pids:
             stat = os.path.join(dirname, pid, "stat")
-            if not os.path.isfile(stat): continue
-            f = open(stat)
-            l = f.readline().split()
-            # read pid, comm, utime, stime
-            f.close()
-            newps[int(l[0])] = [ l[1], int(l[13]), int(l[14])]
+            try:
+                with open(stat) as f:
+                    l = f.readline().split()
+                    # read pid, comm, utime, stime
+                    newps[int(l[0])] = [ l[1], int(l[13]), int(l[14])]
+            except:
+                pass
 
         if len(self.oldps):
             self.oldps = dict(self.newps)
