@@ -1,12 +1,11 @@
 from appletlib.splash import Splash
 
-from util import *
-
 from PyQt4.Qt import *
 
 import os, resource
 
-from sysstat import SysStat
+from sysstatapplet.sysstat import SysStat
+from sysstatapplet.util import *
 
 class SplashMem(Splash):
     def __init__(self, settings):
@@ -27,8 +26,8 @@ class SplashMem(Splash):
     def paintEvent(self,ev):
         ev.accept()
         #for i in sorted(self.data, key=lambda i: sum(i[2:]), reverse=True)[:5]:
-        #    print "%5d %20s: %5.1f%%" % (i[0],i[1][1:-1],sum(i[2:])*100.)
-        #print
+        #    print("%5d %20s: %5.1f%%" % (i[0],i[1][1:-1],sum(i[2:])*100.))
+        #print()
         lh = self.br2.height()
         p = QPainter(self)
         p.setFont( self.font)
@@ -41,11 +40,10 @@ class SplashMem(Splash):
             p.drawText(xpos, 0, self.br1.width(), lh, Qt.AlignRight, str(k[0]))
             xpos+=self.br1.width()+self.margin
             p.setPen(self.settings.fgColor)
-            p.drawText(xpos, 0, 100, lh, Qt.AlignRight, k[1][1:-1])
+            p.drawText(xpos, 0, 100, lh, Qt.AlignRight, k[1])
             xpos+=100+self.margin
             p.setPen(Qt.green)
-            p.drawText(xpos, 0, self.br2.width(), lh, Qt.AlignRight,
-                       "%5.1f%%" % float(sum(k[2:])*100.))
+            p.drawText(xpos, 0, self.br2.width(), lh, Qt.AlignRight, "%5.1f%%" % float(sum(k[2:])*100.))
             p.translate(0,lh+self.margin)
         p.end()
 
@@ -53,6 +51,7 @@ class IndicatorMem(SysStat):
     def __init__(self):
         SysStat.__init__(self, "mem")
         self.splash = SplashMem(self.s)
+        self.keys = [ 'Name', 'Pid', 'VmRSS' ]
         
     def initVars(self):
         self.mem = {}
@@ -71,13 +70,22 @@ class IndicatorMem(SysStat):
         pids = [pid for pid in os.listdir(dirname) if pid.isdigit()]
         self.ps = {}
         for pid in pids:
-            try:
-                with open(os.path.join(dirname, pid, "stat")) as pf:
-                    l = pf.readline().split()
-                    # read pid, comm, rss
-                    self.ps[int(l[0])] = [ l[1], int(l[23])*(resource.getpagesize()/1024) ]
-            except:
-                pass
+            with open(os.path.join(dirname, pid, "status")) as pf:
+                status = dict([
+                    (
+                        line.split(':')[0].strip(),
+                        ':'.join(line.split(':')[1:]).strip()
+                    ) for line in pf.readlines()
+                    if line.split(':')[0].strip() in self.keys
+                ])
+                # read pid, comm, rss
+                rss = status.get('VmRSS', None)
+                if rss is None:
+                    continue
+                self.ps[int(status['Pid'])] = [
+                    status['Name'],
+                    int(status['VmRSS'].split()[0])
+                ]
 
     def drawStats(self):
         self.parseProc()
@@ -115,7 +123,7 @@ class IndicatorMem(SysStat):
         self.s.setIcon(QIcon(pix))
 
         data = []
-        for k,v in self.ps.iteritems():
+        for k,v in self.ps.items():
             data += [ [ k, v[0], (v[1])/float(total) ] ]
         self.splash.data = data
         self.splash.update()
@@ -128,4 +136,4 @@ class IndicatorMem(SysStat):
         buff  = int(self.mem["Buffers"])
         cache = int(self.mem["Cached"])
         aUsed = used-buff-cache
-        print "%d/%d used (%.2f%%)" % (aUsed,total,float(aUsed)/total*100)
+        print("%d/%d used (%.2f%%)" % (aUsed,total,float(aUsed)/total*100))

@@ -1,12 +1,11 @@
-from appletlib.splash    import Splash
-
-from util      import *
+from appletlib.splash import Splash
 
 from PyQt4.Qt  import *
 
 import time, os, re
 
-from sysstat import SysStat
+from sysstatapplet.sysstat import SysStat
+from sysstatapplet.util import *
 
 class SplashDisk(Splash):
     def __init__(self, settings):
@@ -122,7 +121,7 @@ class IndicatorDisk(SysStat):
         total1 = 0
         total2 = 0
         for k in sorted(self.new.keys()):
-            if not k in self.old.keys(): continue
+            if not k in self.old: continue
             read    = self.new[k][0]-self.old[k][0]
             written = self.new[k][1]-self.old[k][1]
             t       = self.new[k][2]-self.old[k][2]
@@ -150,7 +149,7 @@ class IndicatorDisk(SysStat):
         total1 = 0
         total2 = 0
         for k in sorted(self.new.keys()):
-            if not k in self.old.keys(): continue
+            if not k in self.old: continue
             read    = self.new[k][0]-self.old[k][0]
             written = self.new[k][1]-self.old[k][1]
             t       = self.new[k][2]-self.old[k][2]
@@ -159,13 +158,15 @@ class IndicatorDisk(SysStat):
             rate2   = float(written)*512/t
             total1  += rate1
             total2  += rate2
-            print "%s: read %s, written %s, total %s" % \
+            print("%s: read %s, written %s, total %s" % \
                 (k,
                  prettyPrintBytesSec(rate1),
                  prettyPrintBytesSec(rate2),
                  prettyPrintBytesSec(rate1+rate2))
-        print "all: read %s, written %s, total %s" % \
+            )
+        print("all: read %s, written %s, total %s" % \
             (prettyPrintBytesSec(total1),
              prettyPrintBytesSec(total2),
              prettyPrintBytesSec(total1+total2))
-        print
+        )
+        print()

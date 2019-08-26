@@ -4,7 +4,7 @@ from PyQt4.Qt import *
 
 import os
 
-from sysstat import SysStat
+from sysstatapplet.sysstat import SysStat
 
 class SplashCpu(Splash):
     def __init__(self,settings):
@@ -25,8 +25,8 @@ class SplashCpu(Splash):
     def paintEvent(self,ev):
         ev.accept()
         #for i in sorted(self.data, key=lambda i: sum(i[2:]), reverse=True)[:5]:
-        #    print "%5d %20s: %5.1f%%" % (i[0],i[1][1:-1],sum(i[2:])*100.)
-        #print
+        #    print("%5d %20s: %5.1f%%" % (i[0],i[1][1:-1],sum(i[2:])*100.))
+        #print()
         lh = self.br2.height()
         p = QPainter(self)
         p.setFont( self.font)
@@ -143,7 +143,7 @@ class IndicatorCpu(SysStat):
         self.s.setIcon(QIcon(pix))
         
         data = []
-        for k,v in self.newps.iteritems():
+        for k,v in self.newps.items():
             oldv = self.oldps.get(k)
             if oldv:
                 data += [ [ k, v[0],
@@ -164,9 +164,9 @@ class IndicatorCpu(SysStat):
             total = self.new[k][4]-self.old[k][4]
             perc1  = float(work)/total*100
             perc2  = float(idle)/total*100
-            print "%4s: %.2f%% (%.2f%% idle)" % (k, perc1, perc2)
+            print("%4s: %.2f%% (%.2f%% idle)" % (k, perc1, perc2))
             if first == 0: first = perc1
             else: second += perc1
         if second != 0:
-            print "factor:", second/first
-        print
+            print("factor:", second/first)
+        print()

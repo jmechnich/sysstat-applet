@@ -36,7 +36,7 @@ class SysStat(Indicator):
         elif reason == QSystemTrayIcon.Context:
             pass
         elif reason == QSystemTrayIcon.Unknown:
-            print "unknown"
+            print("unknown")
 
     def restart(self):
         self.reset()
