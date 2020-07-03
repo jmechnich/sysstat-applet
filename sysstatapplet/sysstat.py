@@ -1,6 +1,6 @@
 from appletlib.indicator import Indicator
 
-from PyQt4.Qt import QMenu, QTimer, qApp, QSystemTrayIcon, QIcon
+from PyQt5.Qt import QMenu, QTimer, qApp, QSystemTrayIcon, QIcon
 
 class SysStat(Indicator):
     def __init__(self,name):

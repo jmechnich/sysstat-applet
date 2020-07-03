@@ -1,7 +1,7 @@
 sysstat-applet
 ==============
 
-Sysstat system tray applet for X11, written in python and PyQt4
+Sysstat system tray applet for X11, written in Python 3 and PyQt 5
 
 Functionality
 =============
@@ -14,8 +14,8 @@ Requirements
 ============
 
 - appletlib (https://github.com/jmechnich/appletlib)
-- Python 2.7
-- PyQt 4.x
+- Python 3
+- PyQt 5
 
 Screenshots
 ===========

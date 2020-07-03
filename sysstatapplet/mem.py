@@ -1,6 +1,6 @@
 from appletlib.splash import Splash
 
-from PyQt4.Qt import *
+from PyQt5.Qt import *
 
 import os, resource
 
@@ -70,23 +70,26 @@ class IndicatorMem(SysStat):
         pids = [pid for pid in os.listdir(dirname) if pid.isdigit()]
         self.ps = {}
         for pid in pids:
-            with open(os.path.join(dirname, pid, "status")) as pf:
-                status = dict([
-                    (
-                        line.split(':')[0].strip(),
-                        ':'.join(line.split(':')[1:]).strip()
-                    ) for line in pf.readlines()
-                    if line.split(':')[0].strip() in self.keys
-                ])
-                # read pid, comm, rss
-                rss = status.get('VmRSS', None)
-                if rss is None:
-                    continue
-                self.ps[int(status['Pid'])] = [
-                    status['Name'],
-                    int(status['VmRSS'].split()[0])
-                ]
-
+            try:
+                with open(os.path.join(dirname, pid, "status")) as pf:
+                    status = dict([
+                        (
+                            line.split(':')[0].strip(),
+                            ':'.join(line.split(':')[1:]).strip()
+                        ) for line in pf.readlines()
+                        if line.split(':')[0].strip() in self.keys
+                    ])
+                    # read pid, comm, rss
+                    rss = status.get('VmRSS', None)
+                    if rss is None:
+                        continue
+                    self.ps[int(status['Pid'])] = [
+                        status['Name'],
+                        int(status['VmRSS'].split()[0])
+                    ]
+            except FileNotFoundError:
+                pass
+                
     def drawStats(self):
         self.parseProc()
         total = int(self.mem["MemTotal"])

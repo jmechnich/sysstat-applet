@@ -1,6 +1,6 @@
 from appletlib.splash import Splash
 
-from PyQt4.Qt import *
+from PyQt5.Qt import *
 
 import os
 
