@@ -4,8 +4,8 @@ import syslog
 from appletlib.app import Application
 from appletlib.indicator import Indicator
 
-from PyQt5.Qt import QDialog, QGridLayout, QGroupBox, \
-    QLabel, QLineEdit, QMenu, QTimer, qApp, QSystemTrayIcon, QIcon, QVBoxLayout
+from PyQt5.Qt import qApp, QDialog, QGridLayout, QGroupBox, QIcon, QLabel, \
+    QLineEdit, QMenu, QTimer, QSystemTrayIcon, QVBoxLayout
 
 class Preferences(QDialog):
     def __init__(self, sysstat):
@@ -14,19 +14,27 @@ class Preferences(QDialog):
         self.layout = QVBoxLayout()
         self.init()
         self.setLayout(self.layout)
+        self.setWindowIcon(self.sysstat.systray.icon())
 
     def init(self):
         g = QGroupBox("Options for %s" % self.sysstat.name)
         v = QGridLayout()
 
-        tmp = QLabel("External Command")
-        v.addWidget(tmp, 0, 0)
-        tmp = QLineEdit(self.sysstat.extcmd)
-        tmp.returnPressed.connect(lambda: self.sysstat.setExternalCmd(tmp.text()))
-        v.addWidget(tmp, 0, 1)
+        v.addWidget(QLabel("External Command"), 0, 0)
+        self.extcmd = QLineEdit(self.sysstat.extcmd)
+        self.extcmd.returnPressed.connect(
+            lambda: self.sysstat.setExternalCmd(self.extcmd.text()))
+        v.addWidget(self.extcmd, 0, 1)
 
         g.setLayout(v)
         self.layout.addWidget(g)
+
+    def initContents(self):
+        self.setWindowIcon(self.sysstat.systray.icon())
+        self.extcmd.setText(self.sysstat.extcmd)
+
+    def showEvent(self, ev):
+        self.initContents()
 
 class SysStat(Indicator):
     def __init__(self,name):
@@ -36,12 +44,13 @@ class SysStat(Indicator):
         self.initContextMenu()
         self.initStats()
         self.initWidgets()
-        qApp.sigusr1.connect( self.restart)
+        qApp.sigusr1.connect(self.restart)
 
     def initVars(self):
         syslog.syslog( syslog.LOG_DEBUG,
                        "DEBUG  %s: initializing variables" % self.name);
-        self.extcmd = str(Application.settingsValue('%s/extcmd' % self.name, ''))
+        self.extcmd = str(
+            Application.settingsValue('%s/extcmd' % self.name, ''))
         self.extcmdTimer = QTimer(self.systray)
         self.extcmdTimer.timeout.connect(self.checkExternalCmd)
         self.extcmdPopen = None
@@ -51,18 +60,21 @@ class SysStat(Indicator):
         syslog.syslog( syslog.LOG_DEBUG,
                        "DEBUG  %s: initializing context menu" % self.name);
         m = QMenu()
-        m.addAction( QIcon.fromTheme("options"), "&Options", lambda: self.prefs.show())
-        m.addAction( QIcon.fromTheme("application-exit"), "&Quit", qApp.quit)
+        m.addAction(QIcon.fromTheme("view-refresh"), "&Reload",
+                    lambda: self.restart())
+        m.addAction(QIcon.fromTheme("preferences-other"), "&Settings",
+                    lambda: self.prefs.show())
+        m.addAction(QIcon.fromTheme("application-exit"), "&Quit", qApp.quit)
         self.systray.setContextMenu(m)
 
     def initStats(self):
-        self.systray.triggerUpdate.connect( self.func)
+        self.systray.triggerUpdate.connect(self.func)
         QTimer.singleShot(10, self.func)
-        self.systray.activated.connect( self.systrayClicked)
+        self.systray.activated.connect(self.systrayClicked)
 
     def initWidgets(self):
-        syslog.syslog( syslog.LOG_DEBUG,
-                       "DEBUG  %s: initializing preferences" % self.name);
+        syslog.syslog(syslog.LOG_DEBUG,
+                      "DEBUG  %s: initializing preferences" % self.name);
         self.prefs = Preferences(self)
 
     def checkExternalCmd(self):
@@ -74,8 +86,8 @@ class SysStat(Indicator):
             self.extcmdPopen = None
 
     def runExternalCmd(self):
-        syslog.syslog( syslog.LOG_DEBUG,
-                       "DEBUG  %s: running external command" % self.name);
+        syslog.syslog(syslog.LOG_DEBUG,
+                      "DEBUG  %s: running external command" % self.name);
         if self.extcmd is None or not len(self.extcmd):
             return
         if not self.extcmdPopen is None:
