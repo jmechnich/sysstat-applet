@@ -79,17 +79,26 @@ class IndicatorMem(SysStat):
                         ) for line in pf.readlines()
                         if line.split(':')[0].strip() in self.keys
                     ])
-                    # read pid, comm, rss
+
+                    # read pid, name, rss
+                    p = int(status.get('Pid', -1))
+                    if p < 0:
+                        continue
+
+                    name = status.get('Name', None)
+                    if name is None:
+                        continue
+
                     rss = status.get('VmRSS', None)
                     if rss is None:
                         continue
-                    self.ps[int(status['Pid'])] = [
-                        status['Name'],
-                        int(status['VmRSS'].split()[0])
-                    ]
-            except FileNotFoundError:
+
+                    self.ps[p] = [ name, int(rss.split()[0]) ]
+
+            except Exception as e:
+                # ignore all exceptions
                 pass
-                
+
     def drawStats(self):
         self.parseProc()
         total = int(self.mem["MemTotal"])
