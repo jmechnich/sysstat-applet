@@ -8,9 +8,9 @@ from sysstatapplet.sysstat import SysStat
 from sysstatapplet.util import *
 
 class SplashDisk(Splash):
-    def __init__(self, settings):
+    def __init__(self, indicator):
         Splash.__init__(self)
-        self.settings = settings
+        self.indicator = indicator
         self.initVars()
         
     def initVars(self):
@@ -30,8 +30,8 @@ class SplashDisk(Splash):
         self.resize( self.width, height)
         p = QPainter(self)
         p.setFont( self.font)
-        p.fillRect( self.rect(), self.settings.bgColor)
-        p.setPen(self.settings.fgColor)
+        p.fillRect( self.rect(), self.indicator.systray.bgColor)
+        p.setPen(self.indicator.systray.fgColor)
         p.translate(self.margin,self.margin)
 
         total1=0; total2=0
@@ -40,14 +40,14 @@ class SplashDisk(Splash):
             p.setPen(Qt.white)
             p.drawText(xpos, 0, self.br1.width(), lh, Qt.AlignLeft,  k)
             xpos+=self.br1.width()+self.margin
-            p.setPen(self.settings.fgColor)
+            p.setPen(self.indicator.systray.fgColor)
             p.drawText(xpos, 0, self.br1.width(), lh, Qt.AlignRight, "read")
             xpos+=self.br1.width()+self.margin
             p.setPen(Qt.green)
             p.drawText(xpos, 0, self.br2.width(), lh, Qt.AlignRight,
                        prettyPrintBytesSec(self.data[k][0]))
             xpos+=self.br2.width()+self.margin
-            p.setPen(self.settings.fgColor)
+            p.setPen(self.indicator.systray.fgColor)
             p.drawText(xpos, 0, self.br1.width(), lh, Qt.AlignRight, "write")
             xpos+=self.br1.width()+self.margin
             p.setPen(Qt.red)
@@ -61,14 +61,14 @@ class SplashDisk(Splash):
             p.setPen(Qt.white)
             p.drawText(xpos, 0, self.br1.width(), lh, Qt.AlignLeft,  "all")
             xpos+=self.br1.width()+self.margin
-            p.setPen(self.settings.fgColor)
+            p.setPen(self.indicator.systray.fgColor)
             p.drawText(xpos, 0, self.br1.width(), lh, Qt.AlignRight, "read")
             xpos+=self.br1.width()+self.margin
             p.setPen(Qt.green)
             p.drawText(xpos, 0, self.br2.width(), lh, Qt.AlignRight,
                        prettyPrintBytesSec(total1))
             xpos+=self.br2.width()+self.margin
-            p.setPen(self.settings.fgColor)
+            p.setPen(self.indicator.systray.fgColor)
             p.drawText(xpos, 0, self.br1.width(), lh, Qt.AlignRight, "write")
             xpos+=self.br1.width()+self.margin
             p.setPen(Qt.red)
@@ -79,9 +79,10 @@ class SplashDisk(Splash):
 class IndicatorDisk(SysStat):
     def __init__(self):
         SysStat.__init__(self, "disk")
-        self.splash = SplashDisk(self.s)
+        self.splash = SplashDisk(self)
 
     def initVars(self):
+        SysStat.initVars(self)
         self.old = {}
         self.new = {}
         
@@ -110,7 +111,7 @@ class IndicatorDisk(SysStat):
         p = QPainter(pix)
         f = QFont("Dejavu Sans", 6)
         p.setFont( f)
-        p.fillRect(pix.rect(), self.s.bgColor)
+        p.fillRect(pix.rect(), self.systray.bgColor)
         margin = 0
         w = pix.width()-2*margin
         h = pix.height()-2*margin
@@ -130,7 +131,7 @@ class IndicatorDisk(SysStat):
             rate2   = float(written)*512/t
             total1 += rate1
             total2 += rate2
-            p.setPen(self.s.fgColor)
+            p.setPen(self.systray.fgColor)
             p.drawText( 0, 0, round(w*.75), bh, Qt.AlignRight|Qt.AlignVCenter, k)
             if read:
                 p.fillRect( w-4, round(bh*.5)-4, 4, 4, Qt.green)
@@ -139,7 +140,7 @@ class IndicatorDisk(SysStat):
             p.translate(0,round(float(h)/n))
             data[k] = ( rate1, rate2 )
         p.end()
-        self.s.setIcon(QIcon(pix))
+        self.systray.setIcon(QIcon(pix))
         self.splash.data = data
         self.splash.update()
         

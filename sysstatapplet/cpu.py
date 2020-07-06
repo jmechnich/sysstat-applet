@@ -7,9 +7,9 @@ import os
 from sysstatapplet.sysstat import SysStat
 
 class SplashCpu(Splash):
-    def __init__(self,settings):
+    def __init__(self,indicator):
         Splash.__init__(self)
-        self.settings = settings
+        self.indicator = indicator
         self.initVars()
         
     def initVars(self):
@@ -30,15 +30,15 @@ class SplashCpu(Splash):
         lh = self.br2.height()
         p = QPainter(self)
         p.setFont( self.font)
-        p.fillRect( self.rect(), self.settings.bgColor)
-        p.setPen(self.settings.fgColor)
+        p.fillRect( self.rect(), self.indicator.systray.bgColor)
+        p.setPen(self.indicator.systray.fgColor)
         p.translate(self.margin,self.margin)
         for k in sorted(self.data, key=lambda i: sum(i[2:]), reverse=True)[:5]:
             xpos=0
             p.setPen(Qt.white)
             p.drawText(xpos, 0, self.br1.width(), lh, Qt.AlignRight, str(k[0]))
             xpos+=self.br1.width()+self.margin
-            p.setPen(self.settings.fgColor)
+            p.setPen(self.indicator.systray.fgColor)
             p.drawText(xpos, 0, 100, lh, Qt.AlignRight, k[1][1:-1])
             xpos+=100+self.margin
             p.setPen(Qt.green)
@@ -50,9 +50,10 @@ class SplashCpu(Splash):
 class IndicatorCpu(SysStat):
     def __init__(self):
         SysStat.__init__(self, "cpu")
-        self.splash = SplashCpu(self.s)
+        self.splash = SplashCpu(self)
 
     def initVars(self):
+        SysStat.initVars(self)
         self.old = {}
         self.new = {}
         self.oldps = {}
@@ -95,7 +96,7 @@ class IndicatorCpu(SysStat):
         self.parseProc()
         pix = QPixmap(22,22)
         p = QPainter(pix)
-        p.fillRect(pix.rect(), self.s.bgColor)
+        p.fillRect(pix.rect(), self.systray.bgColor)
         margin = 1
         w = pix.width()-2*margin
         h = pix.height()-2*margin
@@ -117,9 +118,9 @@ class IndicatorCpu(SysStat):
             if total == 0: total = 1
             perc1  = float(user)/total
             perc2  = float(system)/total
-            p.fillRect(0, 0,
-                       round(box.height()*perc2), box.width(), self.s.fgColor)
-            c2 = QColor(self.s.fgColor)
+            p.fillRect(0, 0, round(box.height()*perc2), box.width(),
+                       self.systray.fgColor)
+            c2 = QColor(self.systray.fgColor)
             c2.setAlphaF(0.5)
             p.fillRect(round(box.height()*perc2), 0,
                        round(box.height()*perc1), box.width(), c2)
@@ -131,16 +132,17 @@ class IndicatorCpu(SysStat):
         total = self.new["cpu"][4]-self.old["cpu"][4]
         if total == 0: total = 1
         perc1  = float(work)/total
-        c1 = QColor(round(self.s.bgColor.red()+self.s.fgColor.red())/2,
-                    round(self.s.bgColor.green()+self.s.fgColor.green())/2,
-                    round(self.s.bgColor.blue()+self.s.fgColor.blue())/2)
-        p.setPen(self.s.fgColor)
+        c1 = QColor(
+            round(self.systray.bgColor.red()+self.systray.fgColor.red())/2,
+            round(self.systray.bgColor.green()+self.systray.fgColor.green())/2,
+            round(self.systray.bgColor.blue()+self.systray.fgColor.blue())/2)
+        p.setPen(self.systray.fgColor)
         f = QFont("Dejavu Sans", 6)
         p.setFont( f)
         p.drawText(margin,margin,w,h/2,Qt.AlignCenter,
                    "%d%%" % round((perc1+perc2)*100))
         p.end()
-        self.s.setIcon(QIcon(pix))
+        self.systray.setIcon(QIcon(pix))
         
         data = []
         for k,v in self.newps.items():

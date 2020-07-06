@@ -1,18 +1,18 @@
+import os
+import resource
+
 from appletlib.splash import Splash
-
-from PyQt5.Qt import *
-
-import os, resource
-
 from sysstatapplet.sysstat import SysStat
 from sysstatapplet.util import *
 
+from PyQt5.Qt import *
+
 class SplashMem(Splash):
-    def __init__(self, settings):
+    def __init__(self, indicator):
         Splash.__init__(self)
-        self.settings = settings
+        self.indicator = indicator
         self.initVars()
-        
+
     def initVars(self):
         self.data = []
         fm = QFontMetrics( self.font)
@@ -31,15 +31,15 @@ class SplashMem(Splash):
         lh = self.br2.height()
         p = QPainter(self)
         p.setFont( self.font)
-        p.fillRect( self.rect(), self.settings.bgColor)
-        p.setPen(self.settings.fgColor)
+        p.fillRect( self.rect(), self.indicator.systray.bgColor)
+        p.setPen(self.indicator.systray.fgColor)
         p.translate(self.margin,self.margin)
         for k in sorted(self.data, key=lambda i: sum(i[2:]), reverse=True)[:5]:
             xpos=0
             p.setPen(Qt.white)
             p.drawText(xpos, 0, self.br1.width(), lh, Qt.AlignRight, str(k[0]))
             xpos+=self.br1.width()+self.margin
-            p.setPen(self.settings.fgColor)
+            p.setPen(self.indicator.systray.fgColor)
             p.drawText(xpos, 0, 100, lh, Qt.AlignRight, k[1])
             xpos+=100+self.margin
             p.setPen(Qt.green)
@@ -50,10 +50,11 @@ class SplashMem(Splash):
 class IndicatorMem(SysStat):
     def __init__(self):
         SysStat.__init__(self, "mem")
-        self.splash = SplashMem(self.s)
+        self.splash = SplashMem(self)
         self.keys = [ 'Name', 'Pid', 'VmRSS' ]
         
     def initVars(self):
+        SysStat.initVars(self)
         self.mem = {}
         self.ps  = {}
         
@@ -113,26 +114,26 @@ class IndicatorMem(SysStat):
         percFree  = float(total-aUsed)/total
         pix = QPixmap(22,22)
         p = QPainter(pix)
-        p.fillRect(pix.rect(), self.s.bgColor)
+        p.fillRect(pix.rect(), self.systray.bgColor)
         margin = 1
         w = pix.width()-2*margin
         h = pix.height()-2*margin
         p.save()
         p.rotate(-90)
         p.translate(-h-margin,margin)
-        p.fillRect(0,0,round(percUsed*h),w,self.s.fgColor)
+        p.fillRect(0,0,round(percUsed*h),w,self.systray.fgColor)
         p.translate(round(percUsed*h),0)
-        c2 = QColor(self.s.fgColor)
+        c2 = QColor(self.systray.fgColor)
         c2.setAlphaF(0.5)
         p.fillRect(0,0,round(percCache*h),w, c2)
         p.restore()
-        p.setPen(self.s.fgColor)
+        p.setPen(self.systray.fgColor)
         f = QFont("Dejavu Sans", 6)
         p.setFont( f)
         p.drawText(margin,margin,w,h/2,Qt.AlignCenter,
                    "%d%%" % round(percUsed*100))
         p.end()
-        self.s.setIcon(QIcon(pix))
+        self.systray.setIcon(QIcon(pix))
 
         data = []
         for k,v in self.ps.items():
