@@ -1,4 +1,5 @@
 from appletlib.splash import Splash
+from appletlib.app import Application
 
 from PyQt5.Qt  import *
 
@@ -80,18 +81,40 @@ class IndicatorDisk(SysStat):
     def __init__(self):
         SysStat.__init__(self, "disk")
         self.splash = SplashDisk(self)
+        self.addPrefs()
 
     def initVars(self):
         SysStat.initVars(self)
+        self.ignoreList = list(Application.settingsValue(
+            "ignore", [], 'QStringList'))
         self.old = {}
         self.new = {}
         
+    def addPrefs(self):
+        g = QGroupBox("Display Options")
+        v = QGridLayout()
+
+        tmp = QLabel("Ignore List")
+        v.addWidget(tmp, 0, 0)
+        tmp = QLineEdit(", ".join(self.ignoreList))
+        tmp.returnPressed.connect(lambda: self.setIgnoreList(tmp.text()))
+        v.addWidget(tmp, 0, 1)
+
+        g.setLayout(v)
+        self.prefs.layout.addWidget(g)
+
+    def setIgnoreList(self, s):
+        self.ignoreList = [ regex.strip() for regex in s.split(',') ]
+        Application.setSettingsValue("ignore", self.ignoreList)
+
     def parseProc(self):
         self.old = dict(self.new)
         new = {}
+        ignore = re.compile(
+            r'|'.join(self.ignoreList + [ r'^loop\d+$', r'^ram\d+$' ]))
         for dirname, dirnames, filenames in os.walk('/sys/block'):
             for subdirname in dirnames:
-                if re.match( r'^loop\d+$|^ram\d+$', subdirname): continue
+                if re.match( ignore, subdirname): continue
                 stat = os.path.join(dirname, subdirname)
                 stat = os.path.join(stat, "stat")
                 if not os.path.isfile(stat): continue
