@@ -1,3 +1,5 @@
+import syslog
+
 from appletlib.splash import Splash
 from appletlib.app import Application
 
@@ -86,7 +88,7 @@ class IndicatorDisk(SysStat):
     def initVars(self):
         SysStat.initVars(self)
         self.ignoreList = list(Application.settingsValue(
-            "ignore", [], 'QStringList'))
+            "%s/ignore" % self.name, [], 'QStringList'))
         self.old = {}
         self.new = {}
         
@@ -104,12 +106,13 @@ class IndicatorDisk(SysStat):
         self.prefs.layout.addWidget(g)
 
     def setIgnoreList(self, s):
-        self.ignoreList = [ regex.strip() for regex in s.split(',') ]
-        Application.setSettingsValue("ignore", self.ignoreList)
+        self.ignoreList = [
+            regex.strip() for regex in s.split(',') if len(regex.strip()) ]
+        Application.setSettingsValue("%s/ignore" % self.name, self.ignoreList)
 
     def parseProc(self):
         self.old = dict(self.new)
-        new = {}
+        self.new = {}
         ignore = re.compile(
             r'|'.join(self.ignoreList + [ r'^loop\d+$', r'^ram\d+$' ]))
         for dirname, dirnames, filenames in os.walk('/sys/block'):
@@ -120,48 +123,46 @@ class IndicatorDisk(SysStat):
                 if not os.path.isfile(stat): continue
                 with open(stat) as f:
                     l = f.readline().split()
-                    new[subdirname] = (int(l[2]), int(l[6]), time.time())
-        if len(self.old):
-            self.old = dict(self.new)
-        else:
-            self.old = new
-        self.new = new                
+                    self.new[subdirname] = (int(l[2]), int(l[6]), time.time())
 
     def drawStats(self):
         self.parseProc()
-        if not len(self.old): return
         pix = QPixmap(22,22)
         p = QPainter(pix)
         f = QFont("Dejavu Sans", 6)
         p.setFont( f)
         p.fillRect(pix.rect(), self.systray.bgColor)
-        margin = 0
-        w = pix.width()-2*margin
-        h = pix.height()-2*margin
         n = len(self.new)
-        bh = round(float(h)/n)
-        p.translate(margin,margin)
         data = {}
-        total1 = 0
-        total2 = 0
-        for k in sorted(self.new.keys()):
-            if not k in self.old: continue
-            read    = self.new[k][0]-self.old[k][0]
-            written = self.new[k][1]-self.old[k][1]
-            t       = self.new[k][2]-self.old[k][2]
-            if t == 0: t=1
-            rate1   = float(read)*512/t
-            rate2   = float(written)*512/t
-            total1 += rate1
-            total2 += rate2
-            p.setPen(self.systray.fgColor)
-            p.drawText( 0, 0, round(w*.75), bh, Qt.AlignRight|Qt.AlignVCenter, k)
-            if read:
-                p.fillRect( w-4, round(bh*.5)-4, 4, 4, Qt.green)
-            if written:
-                p.fillRect( w-4, round(bh*.5), 4, 4, Qt.red)
-            p.translate(0,round(float(h)/n))
-            data[k] = ( rate1, rate2 )
+        if n > 0:
+            margin = 0
+            w = pix.width()-2*margin
+            h = pix.height()-2*margin
+            bh = round(float(h)/n)
+            p.translate(margin,margin)
+            total1 = 0
+            total2 = 0
+            for k in sorted(self.new.keys()):
+                p.setPen(self.systray.fgColor)
+                p.drawText(0, 0, round(w*.75), bh,
+                           Qt.AlignRight|Qt.AlignVCenter, k)
+                if k in self.old:
+                    read    = self.new[k][0]-self.old[k][0]
+                    written = self.new[k][1]-self.old[k][1]
+                    t       = self.new[k][2]-self.old[k][2]
+                    if t == 0: t=1
+                    rate1   = float(read)*512/t
+                    rate2   = float(written)*512/t
+                    total1 += rate1
+                    total2 += rate2
+                    data[k] = (rate1, rate2)
+                    if read:
+                        p.fillRect(w-4, round(bh*.5)-4, 4, 4, Qt.green)
+                    if written:
+                        p.fillRect(w-4, round(bh*.5), 4, 4, Qt.red)
+                else:
+                    data[k] = (0, 0)
+                p.translate(0,round(float(h)/n))
         p.end()
         self.systray.setIcon(QIcon(pix))
         self.splash.data = data
@@ -169,7 +170,6 @@ class IndicatorDisk(SysStat):
         
     def printStats(self):
         self.parseProc()
-        if not len(self.old): return
         total1 = 0
         total2 = 0
         for k in sorted(self.new.keys()):
