@@ -7,8 +7,9 @@ Functionality
 =============
 
 - Shows three system tray icons displaying cpu, memory and disk stats
-- Left single- or double-click toggles splash screen with extended info
-- Middle-click triggers icon reset
+- Left single or double click toggles splash screen with extended info
+- Middle click triggers external command
+- Right click shows Options and Quit commands in a context menu
 
 Requirements
 ============
