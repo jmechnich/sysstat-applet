@@ -15,8 +15,11 @@ class SplashMem(Splash):
 
     def initVars(self):
         self.data = []
-        fm = QFontMetrics( self.font)
-        self.br1 = fm.boundingRect("00000")
+        fm = QFontMetrics(self.font)
+        pid_max = "00000"
+        with open("/proc/sys/kernel/pid_max", "r") as f:
+            pid_max = f.read()
+        self.br1 = fm.boundingRect(pid_max)
         self.br2 = fm.boundingRect("0000.0%")
         self.margin = 2
         self.width = self.br1.width()+100+self.br2.width()+4*self.margin
@@ -124,7 +127,7 @@ class IndicatorMem(SysStat):
         p.fillRect(0,0,round(percUsed*h),w,self.systray.fgColor)
         p.translate(round(percUsed*h),0)
         c2 = QColor(self.systray.fgColor)
-        c2.setAlphaF(0.5)
+        c2.setAlphaF(0.25)
         p.fillRect(0,0,round(percCache*h),w, c2)
         p.restore()
         p.setPen(self.systray.fgColor)
