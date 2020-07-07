@@ -4,20 +4,18 @@ import syslog
 from appletlib.app import Application
 from appletlib.indicator import Indicator
 
-from PyQt5.Qt import qApp, QDialog, QGridLayout, QGroupBox, QIcon, QLabel, \
-    QLineEdit, QMenu, QTimer, QSystemTrayIcon, QVBoxLayout
+from PyQt5.Qt import *
 
 class Preferences(QDialog):
+    triggerUpdate = pyqtSignal()
+
     def __init__(self, sysstat):
         super(Preferences,self).__init__()
         self.sysstat = sysstat
-        self.layout = QVBoxLayout()
-        self.init()
-        self.setLayout(self.layout)
-        self.setWindowIcon(self.sysstat.systray.icon())
 
-    def init(self):
-        g = QGroupBox("Options for %s" % self.sysstat.name)
+        self.layout = QVBoxLayout()
+        self.setWindowTitle("%s - Settings" % self.sysstat.name)
+        g = QGroupBox("Misc")
         v = QGridLayout()
 
         v.addWidget(QLabel("External Command"), 0, 0)
@@ -26,12 +24,23 @@ class Preferences(QDialog):
             lambda: self.sysstat.setExternalCmd(self.extcmd.text()))
         v.addWidget(self.extcmd, 0, 1)
 
+        v.addWidget(QLabel("Verbose Debugging"), 1, 0)
+        self.verbose = QCheckBox("")
+        self.verbose.toggled.connect(
+            lambda checked: self.sysstat.setVerbose(checked))
+        v.addWidget(self.verbose, 1, 1)
+
         g.setLayout(v)
         self.layout.addWidget(g)
+        self.setLayout(self.layout)
+
+        self.initContents()
 
     def initContents(self):
         self.setWindowIcon(self.sysstat.systray.icon())
         self.extcmd.setText(self.sysstat.extcmd)
+        self.verbose.setChecked(self.sysstat.verbose)
+        self.triggerUpdate.emit()
 
     def showEvent(self, ev):
         self.initContents()
@@ -39,7 +48,6 @@ class Preferences(QDialog):
 class SysStat(Indicator):
     def __init__(self,name):
         Indicator.__init__(self, name, interval=2000)
-        self.func = self.drawStats
         self.initVars()
         self.initContextMenu()
         self.initStats()
@@ -49,11 +57,17 @@ class SysStat(Indicator):
     def initVars(self):
         syslog.syslog( syslog.LOG_DEBUG,
                        "DEBUG  %s: initializing variables" % self.name);
-        self.extcmd = str(
-            Application.settingsValue('%s/extcmd' % self.name, ''))
+
+        # external command
+        self.extcmd = str(Application.settingsValue(
+            '%s/extcmd' % self.name, ''))
         self.extcmdTimer = QTimer(self.systray)
         self.extcmdTimer.timeout.connect(self.checkExternalCmd)
         self.extcmdPopen = None
+
+        # verbose debugging
+        self.verbose = bool(Application.settingsValue(
+            '%s/verbose' % self.name, False))
         self.prefs = None
 
     def initContextMenu(self):
@@ -68,8 +82,9 @@ class SysStat(Indicator):
         self.systray.setContextMenu(m)
 
     def initStats(self):
-        self.systray.triggerUpdate.connect(self.func)
-        QTimer.singleShot(10, self.func)
+        self.systray.triggerToolTip.connect(self.toolTip)
+        self.systray.triggerUpdate.connect(self.update)
+        QTimer.singleShot(10, self.update)
         self.systray.activated.connect(self.systrayClicked)
 
     def initWidgets(self):
@@ -100,9 +115,15 @@ class SysStat(Indicator):
         self.extcmd = extcmd
         Application.setSettingsValue('%s/extcmd' % self.name, self.extcmd)
 
+    def setVerbose(self, verbose):
+        self.verbose = verbose
+        Application.setSettingsValue('%s/verbose' % self.name, self.verbose)
+
     def systrayClicked(self,reason):
         if reason == QSystemTrayIcon.Trigger or \
            reason == QSystemTrayIcon.DoubleClick:
+            if self.splash is None:
+                return
             if self.splash.isVisible():
                 self.splash.hide()
             else:
@@ -110,15 +131,23 @@ class SysStat(Indicator):
                 self.splash.show()
         elif reason == QSystemTrayIcon.MiddleClick:
             self.runExternalCmd()
-            #self.restart()
         elif reason == QSystemTrayIcon.Context:
-            pass
+            if self.verbose:
+                syslog.syslog(
+                    syslog.LOG_DEBUG,
+                    "DEBUG  %s: QSystemTrayIcon::Context" % self.name);
         elif reason == QSystemTrayIcon.Unknown:
-            print("unknown")
+            syslog.syslog(syslog.LOG_DEBUG,
+                          "DEBUG  %s: QSystemTrayIcon::Unknown" % self.name);
 
     def restart(self):
-        syslog.syslog( syslog.LOG_DEBUG,
-                       "DEBUG  %s: restarting" % self.name);
+        syslog.syslog( syslog.LOG_DEBUG, "DEBUG  %s: restarting" % self.name);
         self.reset()
         self.initContextMenu()
         self.initStats()
+
+    def update():
+        syslog.syslog( syslog.LOG_DEBUG, "DEBUG  sysstat: update");
+
+    def toolTip(hev):
+        syslog.syslog( syslog.LOG_DEBUG, "DEBUG  sysstat: toolTip");
