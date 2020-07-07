@@ -1,10 +1,11 @@
+import os
+import syslog
+
+from .sysstat import SysStat
+
 from appletlib.splash import Splash
 
 from PyQt5.Qt import *
-
-import os
-
-from sysstatapplet.sysstat import SysStat
 
 class SplashCpu(Splash):
     def __init__(self,indicator):
@@ -27,9 +28,6 @@ class SplashCpu(Splash):
     
     def paintEvent(self,ev):
         ev.accept()
-        #for i in sorted(self.data, key=lambda i: sum(i[2:]), reverse=True)[:5]:
-        #    print("%5d %20s: %5.1f%%" % (i[0],i[1][1:-1],sum(i[2:])*100.))
-        #print()
         lh = self.br2.height()
         p = QPainter(self)
         p.setFont( self.font)
@@ -54,6 +52,7 @@ class IndicatorCpu(SysStat):
     def __init__(self):
         SysStat.__init__(self, "cpu")
         self.splash = SplashCpu(self)
+        self.splash.triggerClick.connect(self.splashClicked)
 
     def initVars(self):
         SysStat.initVars(self)
@@ -62,6 +61,12 @@ class IndicatorCpu(SysStat):
         self.oldps = {}
         self.newps = {}
         
+    def splashClicked(self,ev):
+        if ev.button() == Qt.LeftButton:
+            self.runExternalCmd()
+        elif ev.button() == Qt.RightButton:
+            self.splash.hide()
+
     def parseProc(self):
         with open('/proc/stat') as f:
             new = {}
@@ -95,7 +100,9 @@ class IndicatorCpu(SysStat):
             self.oldps = newps
         self.newps = newps
 
-    def drawStats(self):
+    def update(self):
+        if self.verbose:
+            syslog.syslog(syslog.LOG_DEBUG, "DEBUG  %s: update" % self.name);
         self.parseProc()
         pix = QPixmap(22,22)
         p = QPainter(pix)
@@ -158,20 +165,3 @@ class IndicatorCpu(SysStat):
                 data += [ [ k, v[0], 0, 0 ] ]
         self.splash.data = data
         self.splash.update()
-
-    def printStats(self):
-        self.parseProc()
-        first=0; second=0
-        for k in sorted(self.old.keys()):
-            work = sum([int(i) for i in self.new[k][0:2]]) - \
-                sum([int(i) for i in self.old[k][0:2]])
-            idle  = int(self.new[k][3])-int(self.old[k][3])
-            total = self.new[k][4]-self.old[k][4]
-            perc1  = float(work)/total*100
-            perc2  = float(idle)/total*100
-            print("%4s: %.2f%% (%.2f%% idle)" % (k, perc1, perc2))
-            if first == 0: first = perc1
-            else: second += perc1
-        if second != 0:
-            print("factor:", second/first)
-        print()

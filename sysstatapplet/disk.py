@@ -1,14 +1,15 @@
+import os
+import re
 import syslog
+import time
+
+from .sysstat import SysStat
+from .util import *
 
 from appletlib.splash import Splash
 from appletlib.app import Application
 
 from PyQt5.Qt  import *
-
-import time, os, re
-
-from sysstatapplet.sysstat import SysStat
-from sysstatapplet.util import *
 
 class SplashDisk(Splash):
     def __init__(self, indicator):
@@ -83,6 +84,7 @@ class IndicatorDisk(SysStat):
     def __init__(self):
         SysStat.__init__(self, "disk")
         self.splash = SplashDisk(self)
+        self.splash.triggerClick.connect(self.splashClicked)
         self.addPrefs()
 
     def initVars(self):
@@ -92,18 +94,28 @@ class IndicatorDisk(SysStat):
         self.old = {}
         self.new = {}
         
+    def splashClicked(self,ev):
+        if ev.button() == Qt.LeftButton:
+            self.runExternalCmd()
+        elif ev.button() == Qt.RightButton:
+            self.splash.hide()
+
     def addPrefs(self):
         g = QGroupBox("Display Options")
         v = QGridLayout()
 
-        tmp = QLabel("Ignore List")
-        v.addWidget(tmp, 0, 0)
-        tmp = QLineEdit(", ".join(self.ignoreList))
-        tmp.returnPressed.connect(lambda: self.setIgnoreList(tmp.text()))
-        v.addWidget(tmp, 0, 1)
+        v.addWidget(QLabel("Ignore List"), 0, 0)
+        self.ignoreListWid = QLineEdit(", ".join(self.ignoreList))
+        self.ignoreListWid.returnPressed.connect(
+            lambda: self.setIgnoreList(self.ignoreListWid.text()))
+        v.addWidget(self.ignoreListWid, 0, 1)
 
         g.setLayout(v)
         self.prefs.layout.addWidget(g)
+        self.prefs.triggerUpdate.connect(self.updatePrefs)
+
+    def updatePrefs(self):
+        self.ignoreListWid.setText(", ".join(self.ignoreList))
 
     def setIgnoreList(self, s):
         self.ignoreList = [
@@ -125,7 +137,9 @@ class IndicatorDisk(SysStat):
                     l = f.readline().split()
                     self.new[subdirname] = (int(l[2]), int(l[6]), time.time())
 
-    def drawStats(self):
+    def update(self):
+        if self.verbose:
+            syslog.syslog( syslog.LOG_DEBUG, "DEBUG  %s: update" % self.name);
         self.parseProc()
         pix = QPixmap(22,22)
         p = QPainter(pix)
@@ -167,30 +181,3 @@ class IndicatorDisk(SysStat):
         self.systray.setIcon(QIcon(pix))
         self.splash.data = data
         self.splash.update()
-        
-    def printStats(self):
-        self.parseProc()
-        total1 = 0
-        total2 = 0
-        for k in sorted(self.new.keys()):
-            if not k in self.old: continue
-            read    = self.new[k][0]-self.old[k][0]
-            written = self.new[k][1]-self.old[k][1]
-            t       = self.new[k][2]-self.old[k][2]
-            if t == 0: t=1
-            rate1   = float(read)*512/t
-            rate2   = float(written)*512/t
-            total1  += rate1
-            total2  += rate2
-            print("%s: read %s, written %s, total %s" % \
-                (k,
-                 prettyPrintBytesSec(rate1),
-                 prettyPrintBytesSec(rate2),
-                 prettyPrintBytesSec(rate1+rate2))
-            )
-        print("all: read %s, written %s, total %s" % \
-            (prettyPrintBytesSec(total1),
-             prettyPrintBytesSec(total2),
-             prettyPrintBytesSec(total1+total2))
-        )
-        print()

@@ -1,9 +1,11 @@
 import os
 import resource
+import syslog
+
+from .sysstat import SysStat
+from .util import *
 
 from appletlib.splash import Splash
-from sysstatapplet.sysstat import SysStat
-from sysstatapplet.util import *
 
 from PyQt5.Qt import *
 
@@ -28,9 +30,6 @@ class SplashMem(Splash):
     
     def paintEvent(self,ev):
         ev.accept()
-        #for i in sorted(self.data, key=lambda i: sum(i[2:]), reverse=True)[:5]:
-        #    print("%5d %20s: %5.1f%%" % (i[0],i[1][1:-1],sum(i[2:])*100.))
-        #print()
         lh = self.br2.height()
         p = QPainter(self)
         p.setFont( self.font)
@@ -46,7 +45,8 @@ class SplashMem(Splash):
             p.drawText(xpos, 0, 100, lh, Qt.AlignRight, k[1])
             xpos+=100+self.margin
             p.setPen(Qt.green)
-            p.drawText(xpos, 0, self.br2.width(), lh, Qt.AlignRight, "%5.1f%%" % float(sum(k[2:])*100.))
+            p.drawText(xpos, 0, self.br2.width(), lh, Qt.AlignRight,
+                       "%5.1f%%" % float(sum(k[2:])*100.))
             p.translate(0,lh+self.margin)
         p.end()
 
@@ -54,13 +54,20 @@ class IndicatorMem(SysStat):
     def __init__(self):
         SysStat.__init__(self, "mem")
         self.splash = SplashMem(self)
-        self.keys = [ 'Name', 'Pid', 'VmRSS' ]
+        self.splash.triggerClick.connect(self.splashClicked)
         
     def initVars(self):
         SysStat.initVars(self)
         self.mem = {}
         self.ps  = {}
+        self.keys = [ 'Name', 'Pid', 'VmRSS' ]
         
+    def splashClicked(self,ev):
+        if ev.button() == Qt.LeftButton:
+            self.runExternalCmd()
+        elif ev.button() == Qt.RightButton:
+            self.splash.hide()
+
     def parseProc(self):
         with open('/proc/meminfo') as f:
             counter = 0
@@ -103,7 +110,9 @@ class IndicatorMem(SysStat):
                 # ignore all exceptions
                 pass
 
-    def drawStats(self):
+    def update(self):
+        if self.verbose:
+            syslog.syslog( syslog.LOG_DEBUG, "DEBUG  %s: update" % self.name);
         self.parseProc()
         total = int(self.mem["MemTotal"])
         free  = int(self.mem["MemFree"])
@@ -143,13 +152,3 @@ class IndicatorMem(SysStat):
             data += [ [ k, v[0], (v[1])/float(total) ] ]
         self.splash.data = data
         self.splash.update()
-
-    def printStats(self):
-        self.parseProc()
-        total = int(self.mem["MemTotal"])
-        free  = int(self.mem["MemFree"])
-        used  = total - free
-        buff  = int(self.mem["Buffers"])
-        cache = int(self.mem["Cached"])
-        aUsed = used-buff-cache
-        print("%d/%d used (%.2f%%)" % (aUsed,total,float(aUsed)/total*100))
