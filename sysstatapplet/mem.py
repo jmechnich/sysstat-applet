@@ -24,16 +24,16 @@ class SplashMem(Splash):
         self.br1 = fm.boundingRect(pid_max)
         self.br2 = fm.boundingRect("0000.0%")
         self.margin = 2
-        self.width = self.br1.width()+100+self.br2.width()+4*self.margin
-        height = 5*(self.br2.height()+self.margin)+self.margin
-        self.resize( self.width, height)
+        self.w = self.br1.width()+100+self.br2.width()+4*self.margin
+        self.h = 5*(self.br2.height()+self.margin)+self.margin
+        self.resize(self.w,self.h)
     
     def paintEvent(self,ev):
         ev.accept()
         lh = self.br2.height()
         p = QPainter(self)
-        p.setFont( self.font)
-        p.fillRect( self.rect(), self.indicator.systray.bgColor)
+        p.setFont(self.font)
+        p.fillRect(self.rect(), self.indicator.systray.bgColor)
         p.setPen(self.indicator.systray.fgColor)
         p.translate(self.margin,self.margin)
         for k in sorted(self.data, key=lambda i: sum(i[2:]), reverse=True)[:5]:
@@ -55,6 +55,8 @@ class IndicatorMem(SysStat):
         SysStat.__init__(self, "mem")
         self.splash = SplashMem(self)
         self.splash.triggerClick.connect(self.splashClicked)
+        self.splash.triggerResize.connect(
+            lambda ev: self.updateSplashGeometry())
         
     def initVars(self):
         SysStat.initVars(self)

@@ -23,18 +23,19 @@ class SplashDisk(Splash):
         self.br1 = fm.boundingRect("write")
         self.br2 = fm.boundingRect("000.0KB/s")
         self.margin = 2
-        self.width = 3*self.br1.width()+2*self.br2.width()+6*self.margin
+        self.w = 3*self.br1.width()+2*self.br2.width()+6*self.margin
+        self.h = len(self.data)*(self.br2.height()+self.margin)+self.margin
         
     def paintEvent(self,ev):
         ev.accept()
         n = len(self.data)
         if n > 1: n+=1
         lh = self.br2.height()
-        height = n*(lh+self.margin)+self.margin
-        self.resize( self.width, height)
+        self.h = n*(lh+self.margin)+self.margin
+        self.resize(self.w, self.h)
         p = QPainter(self)
-        p.setFont( self.font)
-        p.fillRect( self.rect(), self.indicator.systray.bgColor)
+        p.setFont(self.font)
+        p.fillRect(self.rect(), self.indicator.systray.bgColor)
         p.setPen(self.indicator.systray.fgColor)
         p.translate(self.margin,self.margin)
 
@@ -85,6 +86,8 @@ class IndicatorDisk(SysStat):
         SysStat.__init__(self, "disk")
         self.splash = SplashDisk(self)
         self.splash.triggerClick.connect(self.splashClicked)
+        self.splash.triggerResize.connect(
+            lambda ev: self.updateSplashGeometry())
         self.addPrefs()
 
     def initVars(self):
