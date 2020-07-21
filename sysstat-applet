@@ -18,7 +18,6 @@ if __name__ == "__main__":
     args = Application.parseCommandLine('Sysstat applet collection')
     argdict = { 'verbosity': args.verbosity, 'daemon': args.daemon }
     if args.daemon:
-        with daemon.DaemonContext():
-            main(argdict)
-    else:
-        main(argdict)
+        print("Running as daemon stopped working with PyQt5,"
+              " continuing anyway...")
+    main(argdict)
