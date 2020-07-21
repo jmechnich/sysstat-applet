@@ -27,7 +27,7 @@ class SplashMem(Splash):
         self.w = self.br1.width()+100+self.br2.width()+4*self.margin
         self.h = 5*(self.br2.height()+self.margin)+self.margin
         self.resize(self.w,self.h)
-    
+
     def paintEvent(self,ev):
         ev.accept()
         lh = self.br2.height()
@@ -57,13 +57,13 @@ class IndicatorMem(SysStat):
         self.splash.triggerClick.connect(self.splashClicked)
         self.splash.triggerResize.connect(
             lambda ev: self.updateSplashGeometry())
-        
+
     def initVars(self):
         SysStat.initVars(self)
         self.mem = {}
         self.ps  = {}
         self.keys = [ 'Name', 'Pid', 'VmRSS' ]
-        
+
     def splashClicked(self,ev):
         if ev.button() == Qt.LeftButton:
             self.runExternalCmd()
@@ -113,7 +113,7 @@ class IndicatorMem(SysStat):
                 pass
 
     def update(self):
-        if self.verbose:
+        if self.verbose.value():
             syslog.syslog( syslog.LOG_DEBUG, "DEBUG  %s: update" % self.name);
         self.parseProc()
         total = int(self.mem["MemTotal"])

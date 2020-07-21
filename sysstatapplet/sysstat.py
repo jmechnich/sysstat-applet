@@ -1,45 +1,39 @@
 import subprocess
 import syslog
 
-from appletlib.app import Application
+from appletlib.app import Application, SettingsValue
 from appletlib.indicator import Indicator
 
 from PyQt5.Qt import *
 
 class Preferences(QDialog):
-    triggerUpdate = pyqtSignal()
-
     def __init__(self, sysstat):
         super(Preferences,self).__init__()
         self.sysstat = sysstat
 
         self.layout = QVBoxLayout()
         self.setWindowTitle("%s - Settings" % self.sysstat.name)
+
+        g = self.sysstat.getPrefs()
+        self.layout.addWidget(g)
+
         g = QGroupBox("Misc")
         v = QGridLayout()
 
         row = 0
-        v.addWidget(QLabel("Splash position"), row, 0)
-        self.splashpos = QSpinBox()
-        self.splashpos.setMinimum(0)
-        self.splashpos.setMaximum(3)
-        self.splashpos.setValue(self.sysstat.splashpos)
-        self.splashpos.valueChanged.connect(self.sysstat.setSplashPosition)
-        v.addWidget(self.splashpos, row, 1)
-        row +=1
-
         v.addWidget(QLabel("External Command"), row, 0)
-        self.extcmd = QLineEdit(self.sysstat.extcmd)
+        self.extcmd = QLineEdit(self.sysstat.extcmd.value())
         self.extcmd.returnPressed.connect(
-            lambda: self.sysstat.setExternalCmd(self.extcmd.text()))
+            lambda: self.sysstat.extcmd.setValue(self.extcmd.text()))
         v.addWidget(self.extcmd, row, 1)
         row += 1
 
         v.addWidget(QLabel("Verbose Debugging"), row, 0)
-        self.verbose = QCheckBox("")
-        self.verbose.toggled.connect(
-            lambda checked: self.sysstat.setVerbose(checked))
-        v.addWidget(self.verbose, row, 1)
+        verbose = QCheckBox("")
+        verbose.toggled.connect(
+            lambda checked: self.sysstat.verbose.setValue(checked))
+        self.sysstat.verbose.valueChanged.connect(verbose.setChecked)
+        v.addWidget(verbose, row, 1)
         row += 1
 
         g.setLayout(v)
@@ -50,10 +44,7 @@ class Preferences(QDialog):
 
     def initContents(self):
         self.setWindowIcon(self.sysstat.systray.icon())
-        self.splashpos.setValue(self.sysstat.splashpos)
-        self.extcmd.setText(self.sysstat.extcmd)
-        self.verbose.setChecked(self.sysstat.verbose)
-        self.triggerUpdate.emit()
+        self.extcmd.setText(self.sysstat.extcmd.value())
 
     def showEvent(self, ev):
         self.initContents()
@@ -71,20 +62,14 @@ class SysStat(Indicator):
         syslog.syslog( syslog.LOG_DEBUG,
                        "DEBUG  %s: initializing variables" % self.name);
 
-        # splash position
-        self.splashpos = int(Application.settingsValue(
-            '%s/splashpos' % self.name, 0))
-
         # external command
-        self.extcmd = str(Application.settingsValue(
-            '%s/extcmd' % self.name, ''))
+        self.extcmd = SettingsValue('%s/extcmd' % self.name, '', str)
         self.extcmdTimer = QTimer()
         self.extcmdTimer.timeout.connect(self.checkExternalCmd)
         self.extcmdPopen = None
 
         # verbose debugging
-        self.verbose = bool(Application.settingsValue(
-            '%s/verbose' % self.name, False))
+        self.verbose = SettingsValue('%s/verbose' % self.name, False, bool)
         self.prefs = None
 
     def initContextMenu(self):
@@ -120,28 +105,13 @@ class SysStat(Indicator):
     def runExternalCmd(self):
         syslog.syslog(syslog.LOG_DEBUG,
                       "DEBUG  %s: running external command" % self.name);
-        if self.extcmd is None or not len(self.extcmd):
+        extcmd = self.extcmd.value()
+        if not len(extcmd):
             return
         if not self.extcmdPopen is None:
             return
-        cmd = self.extcmd
-        self.extcmdPopen = subprocess.Popen(cmd, shell=True)
+        self.extcmdPopen = subprocess.Popen(extcmd, shell=True)
         self.extcmdTimer.start(500)
-
-    def setSplashPosition(self, pos):
-        if self.splashpos != pos:
-            self.splashpos = pos
-            Application.setSettingsValue(
-                '%s/splashpos' % self.name, self.splashpos)
-            self.updateSplashGeometry()
-
-    def setExternalCmd(self, extcmd):
-        self.extcmd = extcmd
-        Application.setSettingsValue('%s/extcmd' % self.name, self.extcmd)
-
-    def setVerbose(self, verbose):
-        self.verbose = verbose
-        Application.setSettingsValue('%s/verbose' % self.name, self.verbose)
 
     def systrayClicked(self,reason):
         syslog.syslog(syslog.LOG_DEBUG, "DEBUG  sysstat: systray clicked")
@@ -159,7 +129,7 @@ class SysStat(Indicator):
         elif reason == QSystemTrayIcon.MiddleClick:
             self.runExternalCmd()
         elif reason == QSystemTrayIcon.Context:
-            if self.verbose:
+            if self.verbose.value():
                 syslog.syslog(syslog.LOG_DEBUG,
                               "DEBUG  %s: QSystemTrayIcon::Context" % self.name)
         elif reason == QSystemTrayIcon.Unknown:

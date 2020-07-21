@@ -12,7 +12,7 @@ class SplashCpu(Splash):
         Splash.__init__(self)
         self.indicator = indicator
         self.initVars()
-        
+
     def initVars(self):
         self.data = []
         fm = QFontMetrics( self.font)
@@ -25,7 +25,7 @@ class SplashCpu(Splash):
         self.w = self.br1.width()+100+self.br2.width()+4*self.margin
         self.h = 5*(self.br2.height()+self.margin)+self.margin
         self.resize(self.w, self.h)
-    
+
     def paintEvent(self,ev):
         ev.accept()
         lh = self.br2.height()
@@ -62,7 +62,7 @@ class IndicatorCpu(SysStat):
         self.new = {}
         self.oldps = {}
         self.newps = {}
-        
+
     def splashClicked(self,ev):
         if ev.button() == Qt.LeftButton:
             self.runExternalCmd()
@@ -82,7 +82,7 @@ class IndicatorCpu(SysStat):
             else:
                 self.old = new
             self.new = new
-        
+
         dirname = '/proc'
         pids = [pid for pid in os.listdir(dirname) if pid.isdigit()]
         newps = {}
@@ -103,7 +103,7 @@ class IndicatorCpu(SysStat):
         self.newps = newps
 
     def update(self):
-        if self.verbose:
+        if self.verbose.value():
             syslog.syslog(syslog.LOG_DEBUG, "DEBUG  %s: update" % self.name);
         self.parseProc()
         pix = QPixmap(22,22)
@@ -112,7 +112,7 @@ class IndicatorCpu(SysStat):
         margin = 1
         w = pix.width()-2*margin
         h = pix.height()-2*margin
-        
+
         keys = sorted(list(set(self.old.keys()).intersection(self.new.keys())))
         if len(keys) < 3: keys = ['cpu']
         n = len(keys)
@@ -155,7 +155,7 @@ class IndicatorCpu(SysStat):
                    "%d%%" % round((perc1+perc2)*100))
         p.end()
         self.systray.setIcon(QIcon(pix))
-        
+
         data = []
         for k,v in self.newps.items():
             oldv = self.oldps.get(k)

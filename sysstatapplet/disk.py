@@ -7,7 +7,7 @@ from .sysstat import SysStat
 from .util import *
 
 from appletlib.splash import Splash
-from appletlib.app import Application
+from appletlib.app import Application, SettingsValue
 
 from PyQt5.Qt  import *
 
@@ -16,7 +16,7 @@ class SplashDisk(Splash):
         Splash.__init__(self)
         self.indicator = indicator
         self.initVars()
-        
+
     def initVars(self):
         self.data = {}
         fm = QFontMetrics( self.font)
@@ -25,7 +25,7 @@ class SplashDisk(Splash):
         self.margin = 2
         self.w = 3*self.br1.width()+2*self.br2.width()+6*self.margin
         self.h = len(self.data)*(self.br2.height()+self.margin)+self.margin
-        
+
     def paintEvent(self,ev):
         ev.accept()
         n = len(self.data)
@@ -92,11 +92,11 @@ class IndicatorDisk(SysStat):
 
     def initVars(self):
         SysStat.initVars(self)
-        self.ignoreList = list(Application.settingsValue(
-            "%s/ignore" % self.name, [], 'QStringList'))
+        self.ignoreList = SettingsValue(
+            "%s/ignore" % self.name, [], 'QStringList')
         self.old = {}
         self.new = {}
-        
+
     def splashClicked(self,ev):
         if ev.button() == Qt.LeftButton:
             self.runExternalCmd()
@@ -108,28 +108,24 @@ class IndicatorDisk(SysStat):
         v = QGridLayout()
 
         v.addWidget(QLabel("Ignore List"), 0, 0)
-        self.ignoreListWid = QLineEdit(", ".join(self.ignoreList))
-        self.ignoreListWid.returnPressed.connect(
-            lambda: self.setIgnoreList(self.ignoreListWid.text()))
-        v.addWidget(self.ignoreListWid, 0, 1)
+        ignoreListWid = QLineEdit(", ".join(self.ignoreList.value()))
+        ignoreListWid.returnPressed.connect(
+            lambda: self.ignoreList.setValue([
+                regex.strip() for regex in ignoreListWid.text().split(',')
+                if len(regex.strip())
+            ]))
+        self.ignoreList.valueChanged.connect(
+            lambda l: ignoreListWid.setText(','.join(l)))
+        v.addWidget(ignoreListWid, 0, 1)
 
         g.setLayout(v)
         self.prefs.layout.addWidget(g)
-        self.prefs.triggerUpdate.connect(self.updatePrefs)
-
-    def updatePrefs(self):
-        self.ignoreListWid.setText(", ".join(self.ignoreList))
-
-    def setIgnoreList(self, s):
-        self.ignoreList = [
-            regex.strip() for regex in s.split(',') if len(regex.strip()) ]
-        Application.setSettingsValue("%s/ignore" % self.name, self.ignoreList)
 
     def parseProc(self):
         self.old = dict(self.new)
         self.new = {}
         ignore = re.compile(
-            r'|'.join(self.ignoreList + [ r'^loop\d+$', r'^ram\d+$' ]))
+            r'|'.join(self.ignoreList.value() + [ r'^loop\d+$', r'^ram\d+$' ]))
         for dirname, dirnames, filenames in os.walk('/sys/block'):
             for subdirname in dirnames:
                 if re.match( ignore, subdirname): continue
@@ -141,7 +137,7 @@ class IndicatorDisk(SysStat):
                     self.new[subdirname] = (int(l[2]), int(l[6]), time.time())
 
     def update(self):
-        if self.verbose:
+        if self.verbose.value():
             syslog.syslog( syslog.LOG_DEBUG, "DEBUG  %s: update" % self.name);
         self.parseProc()
         pix = QPixmap(22,22)
