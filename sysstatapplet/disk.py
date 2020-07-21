@@ -83,7 +83,7 @@ class SplashDisk(Splash):
 
 class IndicatorDisk(SysStat):
     def __init__(self):
-        SysStat.__init__(self, "disk")
+        SysStat.__init__(self, "disk", "xterm -e 'iostat 1'")
         self.splash = SplashDisk(self)
         self.splash.triggerClick.connect(self.splashClicked)
         self.splash.triggerResize.connect(

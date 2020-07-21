@@ -52,7 +52,7 @@ class SplashMem(Splash):
 
 class IndicatorMem(SysStat):
     def __init__(self):
-        SysStat.__init__(self, "mem")
+        SysStat.__init__(self, "mem", "xterm -e 'vmstat 1'")
         self.splash = SplashMem(self)
         self.splash.triggerClick.connect(self.splashClicked)
         self.splash.triggerResize.connect(

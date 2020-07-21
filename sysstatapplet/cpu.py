@@ -50,7 +50,7 @@ class SplashCpu(Splash):
 
 class IndicatorCpu(SysStat):
     def __init__(self):
-        SysStat.__init__(self, "cpu")
+        SysStat.__init__(self, "cpu", "xterm -e htop")
         self.splash = SplashCpu(self)
         self.splash.triggerClick.connect(self.splashClicked)
         self.splash.triggerResize.connect(

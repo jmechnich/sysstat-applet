@@ -50,8 +50,9 @@ class Preferences(QDialog):
         self.initContents()
 
 class SysStat(Indicator):
-    def __init__(self,name):
+    def __init__(self, name, extcmd=''):
         Indicator.__init__(self, name, interval=2000)
+        self.extcmd_default = extcmd
         self.initVars()
         self.initContextMenu()
         self.initStats()
@@ -63,7 +64,8 @@ class SysStat(Indicator):
                        "DEBUG  %s: initializing variables" % self.name);
 
         # external command
-        self.extcmd = SettingsValue('%s/extcmd' % self.name, '', str)
+        self.extcmd = SettingsValue(
+            '%s/extcmd' % self.name, self.extcmd_default, str)
         self.extcmdTimer = QTimer()
         self.extcmdTimer.timeout.connect(self.checkExternalCmd)
         self.extcmdPopen = None
