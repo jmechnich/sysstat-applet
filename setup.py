@@ -17,6 +17,9 @@ setuptools.setup(
     packages=['sysstatapplet'],
     install_requires=["appletlib"],
     scripts=['sysstat-applet'],
+    data_files = [
+        ('share/applications', ['sysstat-applet.desktop']),
+    ],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",

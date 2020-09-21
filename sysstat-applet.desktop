@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=sysstat-applet
+Comment=Multiple system status applets for the systray
+Exec=sysstat-applet
+Icon=sysstat-applet
+Type=Application
+Categories=System;Monitor;Qt;
+Keywords=System;Utility;System Monitor
