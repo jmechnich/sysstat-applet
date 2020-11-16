@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 
-import setuptools
+from setuptools import setup
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-setuptools.setup(
+setup(
     name='sysstat-applet',
-    version='1.0.0',
     author='Joerg Mechnich',
     author_email='joerg.mechnich@gmail.com',
     description='Tray applet for system monitoring',
@@ -15,6 +14,8 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url='https://github.com/jmechnich/sysstat-applet',
     packages=['sysstatapplet'],
+    use_scm_version={"local_scheme": "no-local-version"},
+    setup_requires=['setuptools_scm'],
     install_requires=["appletlib"],
     scripts=['sysstat-applet'],
     data_files = [
