@@ -144,7 +144,7 @@ class IndicatorMem(SysStat):
         p.setPen(self.systray.fgColor)
         f = QFont("Dejavu Sans", 6)
         p.setFont( f)
-        p.drawText(margin,margin,w,h/2,Qt.AlignCenter,
+        p.drawText(margin,margin,w,round(h/2),Qt.AlignCenter,
                    "%d%%" % round(percUsed*100))
         p.end()
         self.systray.setIcon(QIcon(pix))

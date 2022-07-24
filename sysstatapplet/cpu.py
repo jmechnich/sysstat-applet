@@ -116,7 +116,7 @@ class IndicatorCpu(SysStat):
         keys = sorted(list(set(self.old.keys()).intersection(self.new.keys())))
         if len(keys) < 3: keys = ['cpu']
         n = len(keys)
-        box = QRect(0, 0,(w-(n-1)*margin)/n, h)
+        box = QRect(0, 0,round((w-(n-1)*margin)/n), h)
         p.save()
         p.rotate(-90)
         p.translate(-h-margin,margin)
@@ -145,13 +145,13 @@ class IndicatorCpu(SysStat):
         if total == 0: total = 1
         perc1  = float(work)/total
         c1 = QColor(
-            round(self.systray.bgColor.red()+self.systray.fgColor.red())/2,
-            round(self.systray.bgColor.green()+self.systray.fgColor.green())/2,
-            round(self.systray.bgColor.blue()+self.systray.fgColor.blue())/2)
+            round((self.systray.bgColor.red()+self.systray.fgColor.red())/2),
+            round((self.systray.bgColor.green()+self.systray.fgColor.green())/2),
+            round((self.systray.bgColor.blue()+self.systray.fgColor.blue())/2))
         p.setPen(self.systray.fgColor)
         f = QFont("Dejavu Sans", 6)
         p.setFont( f)
-        p.drawText(margin,margin,w,h/2,Qt.AlignCenter,
+        p.drawText(margin,margin,w,round(h/2),Qt.AlignCenter,
                    "%d%%" % round((perc1+perc2)*100))
         p.end()
         self.systray.setIcon(QIcon(pix))
