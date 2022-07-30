@@ -1,3 +1,8 @@
+[![PyPI versio](https://img.shields.io/pypi/v/sysstat-applet)](https://pypi.org/project/sysstat-applet/)
+[![PyPi format](https://img.shields.io/pypi/format/sysstat-applet)](https://pypi.org/project/sysstat-applet/)
+[![PyPI license](https://img.shields.io/pypi/l/sysstat-applet)](https://pypi.org/project/sysstat-applet/)
+[![PyPi weekly downloads](https://img.shields.io/pypi/dw/sysstat-applet)](https://pypi.org/project/sysstat-applet/)
+
 sysstat-applet
 ==============
 
@@ -22,13 +27,13 @@ Screenshots
 ===========
 
 #### Default view
-![](https://raw.github.com/jmechnich/sysstat-applet/master/screens/screen-nosplash.png)
+![](https://raw.github.com/jmechnich/sysstat-applet/master/misc/screenshot-nosplash.png)
 
 #### CPU splash
-![](https://raw.github.com/jmechnich/sysstat-applet/master/screens/screen-splash-cpu.png)
+![](https://raw.github.com/jmechnich/sysstat-applet/master/misc/screenshot-cpu.png)
 
 #### Memory splash
-![](https://raw.github.com/jmechnich/sysstat-applet/master/screens/screen-splash-mem.png)
+![](https://raw.github.com/jmechnich/sysstat-applet/master/misc/screenshot-mem.png)
 
 #### Disk splash
-![](https://raw.github.com/jmechnich/sysstat-applet/master/screens/screen-splash-disk.png)
+![](https://raw.github.com/jmechnich/sysstat-applet/master/misc/screenshot-disk.png)

@@ -9,6 +9,7 @@ setup(
     name='sysstat-applet',
     author='Joerg Mechnich',
     author_email='joerg.mechnich@gmail.com',
+    license='GNU GPLv3',
     description='Tray applet for system monitoring',
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -19,7 +20,7 @@ setup(
     install_requires=["appletlib"],
     scripts=['sysstat-applet'],
     data_files = [
-        ('share/applications', ['sysstat-applet.desktop']),
+        ('share/applications', ['misc/sysstat-applet.desktop']),
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
