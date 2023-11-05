@@ -1,6 +1,6 @@
 #!/usr/bin/python3 -u
 
-import argparse, daemon, syslog
+import syslog
 
 from appletlib.app      import Application
 from sysstatapplet.cpu  import IndicatorCpu
@@ -12,12 +12,12 @@ def main(argdict):
     app.init(argdict)
     i = [IndicatorCpu(), IndicatorMem(), IndicatorDisk()]
     syslog.syslog( syslog.LOG_INFO, "INFO   startup complete");
-    return app.exec_()
+    return app.exec()
 
 if __name__ == "__main__":
     args = Application.parseCommandLine('Sysstat applet collection')
     argdict = { 'verbosity': args.verbosity, 'daemon': args.daemon }
     if args.daemon:
-        print("Running as daemon stopped working with PyQt5,"
+        print("Running as daemon stopped working with PyQt,"
               " continuing anyway...")
     main(argdict)
